@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 만다라트</title>
+<style>
+  :root{
+    --bg:#0C0E12;
+    --card:#14171D;
+    --card2:#14171F;
+    --border:#22262E;
+    --track:#262B33;
+    --text:#F1F2F4;
+    --dim:#9CA3AF;
+    --faint:#5F6672;
+    --green:#22C55E;
+    --green-soft:rgba(34,197,94,.12);
+    --gold:#EAB308;
+    --red:#D98273;
+    --neutral-low:#1D1F23;
+    --neutral-mid:#2C2F35;
+    --neutral-high:#3D4048;
+    --green-muted:#5F8F6C;
+    --gold-muted:#B99A55;
+    --red-muted:#B06862;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);min-height:100vh;
+    font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    max-width:1440px;margin:0 auto;padding:44px 24px 60px}
+  button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  :focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:8px}
+
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+  h1{font-size:32px;font-weight:800;letter-spacing:-.02em}
+  .greet{margin-top:8px;font-size:15px;color:var(--dim)}
+
+  h1[contenteditable],.greet[contenteditable]{border-radius:8px;padding:2px 6px;margin-left:-6px;
+    cursor:pointer;transition:background .12s;outline:none}
+  h1[contenteditable]:focus,.greet[contenteditable]:focus{cursor:text}
+  h1[contenteditable]:hover,.greet[contenteditable]:hover,
+  h1[contenteditable]:focus,.greet[contenteditable]:focus{background:rgba(234,179,8,.08)}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
+
+  .layout{display:flex;gap:20px;align-items:flex-start}
+  .ring-card{flex:0 0 200px;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+  .ring-wrap{position:relative;width:150px;height:150px}
+  .ring-wrap svg{transform:rotate(-90deg)}
+  .ring-track{stroke:var(--track)}
+  .ring-fill{stroke:var(--green);stroke-linecap:round;transition:stroke-dashoffset .5s ease}
+  .ring-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+  .ring-label{font-size:13px;color:var(--dim);margin-bottom:2px}
+  .ring-value{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums}
+  .ring-unit{font-size:17px;font-weight:700;margin-left:1px}
+
+  .main{flex:1;min-width:0}
+
+  .sub-stats{display:flex;flex-direction:column;gap:10px;margin-top:20px;width:100%}
+  .sub-stat{display:flex;align-items:center;justify-content:space-between}
+  .sub-stat .n{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+  .sub-stat .l{font-size:14.5px;color:var(--faint);line-height:1}
+
+  .grid-card{padding:0}
+  #grid{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:0;background:var(--border);
+    border:1px solid var(--border);border-radius:10px;overflow:hidden;aspect-ratio:1/1}
+
+  .cell{background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:clamp(3px,1vw,8px);text-align:center;padding:clamp(4px,1.4vw,12px);position:relative;min-width:0;overflow:hidden}
+  .cell.b-r{border-right:2px solid var(--bg)}
+  .cell.b-b{border-bottom:2px solid var(--bg)}
+
+  .cell.item{cursor:pointer;transition:background .15s ease;background:#101318}
+  .cell.item:hover{background:#181C24}
+
+  .cell.theme{background:var(--card2)}
+  .cell.theme .t-label{height:calc(1.28em*3);max-height:calc(1.28em*3);overflow:hidden;display:flex;align-items:center;justify-content:center;max-width:100%}
+  .cell.theme .t-label-clamp{font-size:clamp(13px,2.8vw,20px);font-weight:700;letter-spacing:-.01em;color:var(--dim);line-height:1.28;
+    max-width:100%;max-height:100%;overflow-y:auto;word-break:break-word;overflow-wrap:anywhere;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+  .cell.theme .t-pct{font-size:clamp(10px,1.9vw,14px);color:var(--dim);font-variant-numeric:tabular-nums}
+
+  .cell.theme .lbl-text[contenteditable],.cell.center .c-year[contenteditable]{cursor:text;outline:none}
+  .cell.theme .lbl-text[contenteditable]:focus{background:rgba(234,179,8,.08);border-radius:4px}
+  .cell.center .c-year[contenteditable]:focus{background:rgba(234,179,8,.08);border-radius:4px}
+
+  .cell.center{background:#101318}
+  .cell.center .c-year{font-size:clamp(16px,3.2vw,24px);font-weight:800;color:var(--dim);max-width:100%;word-break:break-word;overflow-wrap:anywhere}
+
+  .item-num{font-size:clamp(10px,2vw,13px);font-weight:800;font-variant-numeric:tabular-nums;position:relative;z-index:1;margin-top:16px;
+    background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+
+  .item-label{font-size:clamp(11px,2.3vw,15.5px);line-height:1.28;height:calc(1.28em*3);color:var(--text);position:relative;z-index:1;
+    max-width:100%;word-break:break-word;overflow-wrap:anywhere;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .lbl-text[contenteditable]{cursor:text;outline:none}
+  .lbl-text[contenteditable]:focus{background:rgba(234,179,8,.08);border-radius:4px}
+
+  footer{margin-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--dim)}
+  .legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .hint{font-size:12px;color:var(--faint)}
+  .main-head{display:flex;justify-content:flex-end;margin-top:10px}
+  .btn-ghost{display:flex;align-items:center;gap:6px;border:1px solid var(--border);color:var(--dim);
+    font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px}
+  .btn-ghost:hover{background:var(--card2)}
+  .btn-ghost.active{color:var(--green);border-color:var(--green)}
+
+  #status-msg{font-size:13px;color:var(--faint);text-align:center;padding:60px 0}
+
+  @media(max-width:700px){
+    .layout{flex-direction:column}
+    .ring-card{flex:none;width:100%}
+  }
+  @media(max-width:520px){
+    .item-label{-webkit-line-clamp:2}
+    .top{flex-direction:column}
+  }
+</style>
+</head>
+<body>
+  <div class="layout">
+    <div class="card ring-card">
+      <div class="ring-wrap">
+        <svg width="150" height="150" viewBox="0 0 150 150">
+          <circle class="ring-track" cx="75" cy="75" r="65" fill="none" stroke-width="12"/>
+          <circle id="ringFill" class="ring-fill" cx="75" cy="75" r="65" fill="none" stroke-width="12"
+            stroke-dasharray="408" stroke-dashoffset="408"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-label">전체 달성률</div>
+          <div class="ring-value"><span id="overallNum">0</span><span class="ring-unit">%</span></div>
+        </div>
+      </div>
+      <div class="sub-stats" id="subStats"></div>
+    </div>
+
+    <div class="main">
+      <div id="status-msg">불러오는 중…</div>
+      <div class="grid-card" id="gridCard" style="display:none">
+        <div id="grid"></div>
+      </div>
+      <div class="main-head">
+        <button class="btn-ghost" id="editBtn">수정</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const THEME_DOT = {'카테고리1':'#5FA37A','카테고리2':'#5B8FC9','카테고리3':'#D4AF5A','카테고리4':'#A69A85','카테고리5':'#8C7FB8','카테고리6':'#D98A68','카테고리7':'#C081A0','카테고리8':'#C9793F'};
+const BLOCK_THEME = [['카테고리1','카테고리2','카테고리3'],['카테고리4',null,'카테고리5'],['카테고리6','카테고리7','카테고리8']];
+const LETTER_TO_NUM = {x:0, p:50, ok:100};
+const COLOR_STOPS = [
+  {v:0, rgb:[62,74,68]},
+  {v:50, rgb:[95,143,108]},
+  {v:100, rgb:[34,197,94]}
+];
+function colorFor(v){
+  let a=COLOR_STOPS[0], b=COLOR_STOPS[1];
+  if(v>50){ a=COLOR_STOPS[1]; b=COLOR_STOPS[2]; }
+  const t = (v-a.v)/(b.v-a.v);
+  const r = Math.round(a.rgb[0]+(b.rgb[0]-a.rgb[0])*t);
+  const g = Math.round(a.rgb[1]+(b.rgb[1]-a.rgb[1])*t);
+  const bl = Math.round(a.rgb[2]+(b.rgb[2]-a.rgb[2])*t);
+  return 'rgb('+r+','+g+','+bl+')';
+}
+
+const rows = [
+[['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력']],
+[['x','목표 입력'],['th','카테고리1'],['x','목표 입력'],['x','목표 입력'],['th','카테고리2'],['x','목표 입력'],['x','목표 입력'],['th','카테고리3'],['x','목표 입력']],
+[['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력']],
+[['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['th','카테고리1'],['th','카테고리2'],['th','카테고리3'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력']],
+[['x','목표 입력'],['th','카테고리4'],['x','목표 입력'],['th','카테고리4'],['c','2026'],['th','카테고리5'],['x','목표 입력'],['th','카테고리5'],['x','목표 입력']],
+[['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['th','카테고리6'],['th','카테고리7'],['th','카테고리8'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력']],
+[['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력']],
+[['x','목표 입력'],['th','카테고리6'],['x','목표 입력'],['x','목표 입력'],['th','카테고리7'],['x','목표 입력'],['x','목표 입력'],['th','카테고리8'],['x','목표 입력']],
+[['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력'],['x','목표 입력']]
+];
+
+const STORAGE_KEY = 'mandalart-2026-status-v2';
+const TITLE_KEY = 'mandalart-2026-title-v2';
+const SUB_KEY = 'mandalart-2026-subtitle-v2';
+const LABELS_KEY = 'mandalart-2026-labels-v2';
+const THEME_LABELS_KEY = 'mandalart-2026-theme-labels-v2';
+const CENTER_LABEL_KEY = 'mandalart-2026-center-label-v2';
+let state = {};
+let labels = {};
+let themeLabels = {};
+let centerLabel = null;
+let editMode = false;
+
+function getLabel(key, fallback){
+  return labels[key] !== undefined ? labels[key] : fallback;
+}
+const DEFAULT_LABELS = {};
+rows.forEach((row,r)=> row.forEach((cell,c)=>{
+  if(cell[0]!=='th' && cell[0]!=='c') DEFAULT_LABELS[r+'_'+c] = cell[1];
+}));
+
+function defaultState(){
+  const s = {};
+  rows.forEach((row,r)=> row.forEach((cell,c)=>{
+    if(cell[0]!=='th' && cell[0]!=='c') s[r+'_'+c] = LETTER_TO_NUM[cell[0]];
+  }));
+  return s;
+}
+
+
+
+function computeStats(){
+  const themeStats = {};
+  Object.keys(THEME_DOT).forEach(k=> themeStats[k] = {sum:0,count:0});
+  let overallSum=0, overallCount=0;
+  rows.forEach((row,r)=>{
+    const blockRow = Math.floor(r/3);
+    row.forEach((cell,c)=>{
+      const t0 = cell[0];
+      if(t0==='th'||t0==='c') return;
+      const blockCol = Math.floor(c/3);
+      const themeKey = BLOCK_THEME[blockRow][blockCol];
+      const key = r+'_'+c;
+      const sc = state[key] !== undefined ? state[key] : LETTER_TO_NUM[t0];
+      themeStats[themeKey].sum += sc;
+      themeStats[themeKey].count += 1;
+      overallSum += sc; overallCount += 1;
+    });
+  });
+  const overallPct = overallCount ? Math.round(overallSum/overallCount) : 0;
+  let done=0, doing=0, fail=0;
+  Object.values(state).forEach(v=>{ if(v>=100) done++; else if(v<=0) fail++; else doing++; });
+  return {themeStats, overallPct, done, doing, fail};
+}
+
+let prevScore = {};
+function countUp(el, from, to, duration){
+  if(from===to){ el.textContent = to; el.style.setProperty('--fp', to+'%'); return; }
+  const start = performance.now();
+  function tick(now){
+    const t = Math.min((now-start)/duration, 1);
+    const val = Math.round(from + (to-from)*t);
+    el.textContent = val;
+    el.style.setProperty('--fp', val+'%');
+    if(t<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function toHtml(text){
+  return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function render(){
+  const {themeStats, overallPct, done, doing, fail} = computeStats();
+  document.getElementById('overallNum').textContent = overallPct;
+  const circumference = 408;
+  document.getElementById('ringFill').style.strokeDashoffset = circumference * (1 - overallPct/100);
+
+  document.getElementById('subStats').innerHTML =
+    '<div class="sub-stat"><span class="l">완료</span><span class="n" style="color:var(--green)">'+done+'</span></div>'
+    +'<div class="sub-stat"><span class="l">진행중</span><span class="n" style="color:var(--gold)">'+doing+'</span></div>'
+    +'<div class="sub-stat"><span class="l">준비중</span><span class="n" style="color:var(--red)">'+fail+'</span></div>';
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const animQueue = [];
+  rows.forEach((row,r)=>{
+    const blockRow = Math.floor(r/3);
+    row.forEach((cell,c)=>{
+      const blockCol = Math.floor(c/3);
+      const t = cell[0];
+      const label = cell[1];
+      const div = document.createElement('div');
+      div.className = 'cell' + (c<8?' b-r':'') + (r<8?' b-b':'');
+
+      if(t==='th'){
+        div.classList.add('theme');
+        const displayTheme = themeLabels[label] || label;
+        div.innerHTML = '<span class="t-label" id="thwrap-'+label+'"><span class="t-label-clamp">'+(editMode
+          ? '<span class="lbl-text" contenteditable="true" spellcheck="false">'+toHtml(displayTheme)+'</span>'
+          : toHtml(displayTheme))+'</span></span>';
+        if(editMode){
+          const el = div.querySelector('.lbl-text');
+          el.addEventListener('blur', ()=> saveThemeLabel(label, el));
+          const wrapEl = div.querySelector('.t-label');
+          wrapEl.addEventListener('click', ()=> el.focus());
+        }
+      } else if(t==='c'){
+        div.classList.add('center');
+        const displayCenter = centerLabel !== null ? centerLabel : label;
+        div.innerHTML = '<span class="c-year"'+(editMode?' contenteditable="true" spellcheck="false"':'')+'>'+toHtml(displayCenter)+'</span>';
+        if(editMode){
+          const el = div.querySelector('.c-year');
+          el.addEventListener('blur', ()=> saveCenterLabel(el));
+        }
+      } else {
+        div.classList.add('item');
+        div.tabIndex = 0;
+        const key = r+'_'+c;
+        const target = state[key] !== undefined ? state[key] : LETTER_TO_NUM[t];
+        const from = prevScore[key] !== undefined ? prevScore[key] : 0;
+        const displayLabel = getLabel(key, label);
+        div.innerHTML = '<span class="item-num" id="num-'+key+'" style="--fc:'+colorFor(target)+';--ec:var(--faint);--fp:'+from+'%;background-image:linear-gradient(to top, var(--fc) var(--fp), var(--ec) var(--fp));">'+from+'</span>'
+          + '<span class="item-label" id="lblwrap-'+key+'">'+(editMode
+            ? '<span class="lbl-text" contenteditable="true" spellcheck="false" id="lbl-'+key+'">'+toHtml(displayLabel)+'</span>'
+            : toHtml(displayLabel))+'</span>';
+        animQueue.push({key, from, to:target});
+        if(editMode){
+          const lblEl = div.querySelector('.lbl-text');
+          lblEl.addEventListener('blur', ()=> saveLabel(key, lblEl));
+          const wrapEl = div.querySelector('.item-label');
+          wrapEl.addEventListener('click', ()=> lblEl.focus());
+        } else {
+          div.addEventListener('click', ()=> cycle(key));
+          div.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); cycle(key);} });
+        }
+      }
+      grid.appendChild(div);
+    });
+  });
+  animQueue.forEach(a=>{
+    prevScore[a.key] = a.to;
+    const numEl = document.getElementById('num-'+a.key);
+    if(numEl) countUp(numEl, a.from, a.to, 450);
+  });
+}
+
+async function saveLabel(key, el){
+  const text = el.innerText.trim();
+  if(text){ labels[key] = text; } else { delete labels[key]; el.textContent = DEFAULT_LABELS[key]; }
+  try{ await window.storage.set(LABELS_KEY, JSON.stringify(labels), false); }
+  catch(err){ console.error('저장 실패', err); }
+}
+
+async function saveThemeLabel(themeKey, el){
+  const text = el.innerText.trim();
+  if(text){ themeLabels[themeKey] = text; } else { delete themeLabels[themeKey]; el.textContent = themeKey; }
+  try{ await window.storage.set(THEME_LABELS_KEY, JSON.stringify(themeLabels), false); }
+  catch(err){ console.error('저장 실패', err); }
+}
+
+async function saveCenterLabel(el){
+  const text = el.innerText.trim();
+  centerLabel = text || '2026';
+  el.textContent = centerLabel;
+  try{ await window.storage.set(CENTER_LABEL_KEY, centerLabel, false); }
+  catch(err){ console.error('저장 실패', err); }
+}
+
+async function cycle(key){
+  const cur = state[key] !== undefined ? state[key] : 0;
+  state[key] = (cur + 10) % 110;
+  render();
+  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(state), false); }
+  catch(err){ console.error('저장 실패', err); }
+}
+
+async function init(){
+  try{
+    const result = await window.storage.get(STORAGE_KEY, false);
+    state = result && result.value ? JSON.parse(result.value) : defaultState();
+    Object.keys(state).forEach(k=>{
+      if(typeof state[k] !== 'number') state[k] = LETTER_TO_NUM[state[k]] !== undefined ? LETTER_TO_NUM[state[k]] : 0;
+    });
+  }catch(err){
+    state = defaultState();
+  }
+  try{
+    const result = await window.storage.get(LABELS_KEY, false);
+    labels = result && result.value ? JSON.parse(result.value) : {};
+  }catch(err){
+    labels = {};
+  }
+  try{
+    const result = await window.storage.get(THEME_LABELS_KEY, false);
+    themeLabels = result && result.value ? JSON.parse(result.value) : {};
+  }catch(err){
+    themeLabels = {};
+  }
+  try{
+    const result = await window.storage.get(CENTER_LABEL_KEY, false);
+    centerLabel = result && result.value ? result.value : null;
+  }catch(err){
+    centerLabel = null;
+  }
+  document.getElementById('status-msg').style.display = 'none';
+  document.getElementById('gridCard').style.display = 'block';
+  render();
+}
+
+document.getElementById('editBtn').addEventListener('click', ()=>{
+  editMode = !editMode;
+  const btn = document.getElementById('editBtn');
+  btn.textContent = editMode ? '완료' : '수정';
+  btn.classList.toggle('active', editMode);
+  render();
+});
+
+init();
+</script>
+</body>
+</html>
