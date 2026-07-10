@@ -111,6 +111,17 @@
 
   #status-msg{font-size:13px;color:var(--faint);text-align:center;padding:60px 0}
 
+  .lock-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000}
+  .lock-box{width:min(280px,82vw);text-align:center}
+  .lock-title{font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+  .lock-sub{font-size:13px;color:var(--dim);margin-bottom:20px}
+  .lock-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;
+    color:var(--text);font-size:18px;text-align:center;letter-spacing:6px;padding:12px;outline:none;margin-bottom:10px}
+  .lock-input:focus{border-color:var(--green)}
+  .lock-btn{width:100%;background:var(--green);color:#0B2412;font-size:14px;font-weight:700;
+    padding:11px;border-radius:8px}
+  .lock-error{min-height:18px;margin-top:10px;font-size:12.5px;color:var(--red)}
+
   @media(max-width:700px){
     .layout{flex-direction:column}
     .ring-card{flex:none;width:100%}
@@ -122,7 +133,17 @@
 </style>
 </head>
 <body>
-  <div class="layout">
+  <div id="lockScreen" class="lock-overlay">
+    <div class="lock-box">
+      <div class="lock-title">2026 만다라트</div>
+      <div class="lock-sub">비밀번호를 입력하세요</div>
+      <input id="lockInput" class="lock-input" type="password" inputmode="numeric" maxlength="8" placeholder="••••">
+      <button class="lock-btn" id="lockBtn">입장하기</button>
+      <div class="lock-error" id="lockError"></div>
+    </div>
+  </div>
+
+  <div class="layout" id="layout" style="display:none">
     <div class="card ring-card">
       <div class="ring-wrap">
         <svg width="150" height="150" viewBox="0 0 150 150">
@@ -150,6 +171,17 @@
   </div>
 
 <script>
+const storage = {
+  get(key){
+    try{ const v = localStorage.getItem(key); return v!==null ? {value:v} : null; }
+    catch(err){ return null; }
+  },
+  set(key, value){
+    try{ localStorage.setItem(key, value); return {value}; }
+    catch(err){ return null; }
+  }
+};
+
 const THEME_DOT = {'카테고리1':'#5FA37A','카테고리2':'#5B8FC9','카테고리3':'#D4AF5A','카테고리4':'#A69A85','카테고리5':'#8C7FB8','카테고리6':'#D98A68','카테고리7':'#C081A0','카테고리8':'#C9793F'};
 const BLOCK_THEME = [['카테고리1','카테고리2','카테고리3'],['카테고리4',null,'카테고리5'],['카테고리6','카테고리7','카테고리8']];
 const LETTER_TO_NUM = {x:0, p:50, ok:100};
@@ -330,14 +362,14 @@ function render(){
 async function saveLabel(key, el){
   const text = el.innerText.trim();
   if(text){ labels[key] = text; } else { delete labels[key]; el.textContent = DEFAULT_LABELS[key]; }
-  try{ await window.storage.set(LABELS_KEY, JSON.stringify(labels), false); }
+  try{ storage.set(LABELS_KEY, JSON.stringify(labels)); }
   catch(err){ console.error('저장 실패', err); }
 }
 
 async function saveThemeLabel(themeKey, el){
   const text = el.innerText.trim();
   if(text){ themeLabels[themeKey] = text; } else { delete themeLabels[themeKey]; el.textContent = themeKey; }
-  try{ await window.storage.set(THEME_LABELS_KEY, JSON.stringify(themeLabels), false); }
+  try{ storage.set(THEME_LABELS_KEY, JSON.stringify(themeLabels)); }
   catch(err){ console.error('저장 실패', err); }
 }
 
@@ -345,7 +377,7 @@ async function saveCenterLabel(el){
   const text = el.innerText.trim();
   centerLabel = text || '2026';
   el.textContent = centerLabel;
-  try{ await window.storage.set(CENTER_LABEL_KEY, centerLabel, false); }
+  try{ storage.set(CENTER_LABEL_KEY, centerLabel); }
   catch(err){ console.error('저장 실패', err); }
 }
 
@@ -353,13 +385,13 @@ async function cycle(key){
   const cur = state[key] !== undefined ? state[key] : 0;
   state[key] = (cur + 10) % 110;
   render();
-  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(state), false); }
+  try{ storage.set(STORAGE_KEY, JSON.stringify(state)); }
   catch(err){ console.error('저장 실패', err); }
 }
 
 async function init(){
   try{
-    const result = await window.storage.get(STORAGE_KEY, false);
+    const result = storage.get(STORAGE_KEY);
     state = result && result.value ? JSON.parse(result.value) : defaultState();
     Object.keys(state).forEach(k=>{
       if(typeof state[k] !== 'number') state[k] = LETTER_TO_NUM[state[k]] !== undefined ? LETTER_TO_NUM[state[k]] : 0;
@@ -368,19 +400,19 @@ async function init(){
     state = defaultState();
   }
   try{
-    const result = await window.storage.get(LABELS_KEY, false);
+    const result = storage.get(LABELS_KEY);
     labels = result && result.value ? JSON.parse(result.value) : {};
   }catch(err){
     labels = {};
   }
   try{
-    const result = await window.storage.get(THEME_LABELS_KEY, false);
+    const result = storage.get(THEME_LABELS_KEY);
     themeLabels = result && result.value ? JSON.parse(result.value) : {};
   }catch(err){
     themeLabels = {};
   }
   try{
-    const result = await window.storage.get(CENTER_LABEL_KEY, false);
+    const result = storage.get(CENTER_LABEL_KEY);
     centerLabel = result && result.value ? result.value : null;
   }catch(err){
     centerLabel = null;
@@ -398,7 +430,39 @@ document.getElementById('editBtn').addEventListener('click', ()=>{
   render();
 });
 
-init();
+const SITE_PASSWORD = '1573';
+const UNLOCK_KEY = 'mandalart-2026-unlocked';
+
+function showApp(){
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('layout').style.display = 'flex';
+  init();
+}
+
+function tryUnlock(){
+  const input = document.getElementById('lockInput');
+  const errEl = document.getElementById('lockError');
+  if(input.value === SITE_PASSWORD){
+    try{ storage.set(UNLOCK_KEY, 'true'); }catch(err){}
+    showApp();
+  } else {
+    errEl.textContent = '비밀번호가 올바르지 않아요.';
+    input.value = '';
+    input.focus();
+  }
+}
+
+document.getElementById('lockBtn').addEventListener('click', tryUnlock);
+document.getElementById('lockInput').addEventListener('keydown', (e)=>{
+  if(e.key==='Enter') tryUnlock();
+});
+
+const alreadyUnlocked = storage.get(UNLOCK_KEY);
+if(alreadyUnlocked && alreadyUnlocked.value === 'true'){
+  showApp();
+} else {
+  document.getElementById('lockInput').focus();
+}
 </script>
 </body>
 </html>
