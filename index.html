@@ -111,6 +111,9 @@
 
   #status-msg{font-size:13px;color:var(--faint);text-align:center;padding:60px 0}
 
+  .check-badge{position:absolute;top:6px;right:8px;z-index:2;line-height:1}
+  .check-badge svg{width:15px;height:15px;display:block}
+
   .lock-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000}
   .lock-box{width:min(280px,82vw);text-align:center}
   .lock-title{font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
@@ -334,7 +337,8 @@ function render(){
         const target = state[key] !== undefined ? state[key] : LETTER_TO_NUM[t];
         const from = prevScore[key] !== undefined ? prevScore[key] : 0;
         const displayLabel = getLabel(key, label);
-        div.innerHTML = '<span class="item-num" id="num-'+key+'" style="--fc:'+colorFor(target)+';--ec:var(--faint);--fp:'+from+'%;background-image:linear-gradient(to top, var(--fc) var(--fp), var(--ec) var(--fp));">'+from+'</span>'
+        div.innerHTML = (target>=100 ? '<span class="check-badge"><svg viewBox="0 0 24 24" fill="none"><polyline points="4.4,12.4 9,17 18.5,5.6" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' : '')
+          + '<span class="item-num" id="num-'+key+'" style="--fc:'+colorFor(target)+';--ec:var(--faint);--fp:'+from+'%;background-image:linear-gradient(to top, var(--fc) var(--fp), var(--ec) var(--fp));">'+from+'</span>'
           + '<span class="item-label" id="lblwrap-'+key+'">'+(editMode
             ? '<span class="lbl-text" contenteditable="true" spellcheck="false" id="lbl-'+key+'">'+toHtml(displayLabel)+'</span>'
             : toHtml(displayLabel))+'</span>';
