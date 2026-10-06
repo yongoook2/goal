@@ -65,13 +65,20 @@
   .sub-stat .l{font-size:14.5px;color:var(--faint);line-height:1}
 
   .grid-card{padding:0}
-  #grid{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:0;background:var(--border);
-    border:1px solid var(--border);border-radius:10px;overflow:hidden;aspect-ratio:1/1}
+  #grid{--bgap:clamp(10px,1.8vw,24px);display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr)) var(--bgap) repeat(3,minmax(0,1fr)) var(--bgap) repeat(3,minmax(0,1fr));
+    grid-template-rows:repeat(3,minmax(0,1fr)) var(--bgap) repeat(3,minmax(0,1fr)) var(--bgap) repeat(3,minmax(0,1fr));
+    gap:0;background:transparent;aspect-ratio:1/1}
 
   .cell{background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:clamp(3px,1vw,8px);text-align:center;padding:clamp(4px,1.4vw,12px);position:relative;min-width:0;overflow:hidden}
   .cell.b-r{border-right:2px solid var(--bg)}
   .cell.b-b{border-bottom:2px solid var(--bg)}
+  .block-outline{border:1px solid var(--border);border-radius:12px;pointer-events:none;position:relative;z-index:3}
+  .cell.e-l.e-t{border-top-left-radius:12px}
+  .cell.e-r.e-t{border-top-right-radius:12px}
+  .cell.e-l.e-b{border-bottom-left-radius:12px}
+  .cell.e-r.e-b{border-bottom-right-radius:12px}
 
   .cell.item{cursor:pointer;transition:background .15s ease;background:#101318}
   .cell.item:hover{background:#181C24}
@@ -308,7 +315,9 @@ function render(){
       const t = cell[0];
       const label = cell[1];
       const div = document.createElement('div');
-      div.className = 'cell' + (c<8?' b-r':'') + (r<8?' b-b':'');
+      div.className = 'cell' + (c%3!==2?' b-r':' e-r') + (r%3!==2?' b-b':' e-b') + (c%3===0?' e-l':'') + (r%3===0?' e-t':'');
+      div.style.gridColumn = (c + Math.floor(c/3) + 1);
+      div.style.gridRow = (r + Math.floor(r/3) + 1);
 
       if(t==='th'){
         div.classList.add('theme');
@@ -356,6 +365,15 @@ function render(){
       grid.appendChild(div);
     });
   });
+  for(let br=0; br<3; br++){
+    for(let bc=0; bc<3; bc++){
+      const ov = document.createElement('div');
+      ov.className = 'block-outline';
+      ov.style.gridColumn = (bc*4+1) + ' / span 3';
+      ov.style.gridRow = (br*4+1) + ' / span 3';
+      grid.appendChild(ov);
+    }
+  }
   animQueue.forEach(a=>{
     prevScore[a.key] = a.to;
     const numEl = document.getElementById('num-'+a.key);
